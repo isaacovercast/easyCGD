@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from collections import Counter
 from itertools import combinations
-from scipy.stats import entropy
+from scipy.stats import entropy,linregress
 
 
 #######################################################
@@ -151,6 +151,58 @@ def plot_RACs(in_df, title="Rank abundance", label=None, ax=None, color=None):
     plt.legend(fontsize=15)
     return ax
 
+
+## Plot correlation between abundances and genetic diversities. Input should be dataframes
+## with index indicating OTU for both frames.
+def plot_abundance_diversity_correlation(a_df, g_df, ax=None, drop_zeros=False, color="b", log_transform=False,\
+                                        do_proportions=False, title="Abundance Genetic Diversity Correlation",\
+                                        quiet=True):
+    if ax == None:
+        _, ax = plt.subplots(figsize=(10, 10))
+
+    ## if doing proportions scale all values to sum to 1
+    if do_proportions:
+        tmp_pis_df = g_df/g_df.sum(axis=0)
+        tmp_abund_df = a_df/a_df.sum(axis=0)
+    else:
+        tmp_pis_df = g_df
+        tmp_abund_df = a_df
+
+    if log_transform:
+        tmp_pis_df = g_df
+        tmp_abund_df = np.log(a_df)
+
+    ## Get global max x and y values for each ABC across all regions
+    xmax = tmp_abund_df.max().values[0]
+    ymax = tmp_pis_df.max().values[0]
+    ax.set_xlim(0, xmax)
+    ax.set_ylim(0, ymax)
+
+    ## Merge abundances and genetic diversities preserving OTU index, and drop any with missing data
+    tmp_df = pd.concat([tmp_abund_df, tmp_pis_df], axis=1, sort=True).dropna()
+    if len(tmp_df) == 0:
+        print("abundance and genetic diversity inputs do not have the same indices, so this function is unavailable.")
+        return
+    tmp_df.columns = ["abund", "genet"]
+
+    ## drop all rows with no genetic information
+    if drop_zeros:
+        tmp_df = tmp_df[tmp_df["genet"] > 0]
+
+    ## Draw the linear regression line
+    linreg = linregress(tmp_df["abund"], tmp_df["genet"])
+    X = np.linspace(0, max([xmax, ymax]), 100)
+    Y = X*linreg.slope + linreg.intercept
+    ax.plot(X, Y, color=color, alpha=.5)
+
+    ax.scatter(tmp_df["abund"], tmp_df["genet"], label="{:.4f} - {}".format(linreg.rvalue**2, "Reunion Spiders"), color=color)
+
+    if not quiet: print(linreg)
+    _ = plt.xlabel("Abundance", fontsize=15)
+    _ = plt.ylabel("Genetic Diversity", fontsize=15)
+    _ = plt.legend(loc="upper right")
+    _ = plt.suptitle(title, fontsize=20)
+    return ax
 
 #######################################################
 ## Loading functions
