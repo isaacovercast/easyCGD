@@ -154,11 +154,17 @@ def plot_RACs(in_df, title="Rank abundance", label=None, ax=None, color=None):
 
 ## Plot correlation between abundances and genetic diversities. Input should be dataframes
 ## with index indicating OTU for both frames.
-def plot_abundance_diversity_correlation(a_df, g_df, ax=None, drop_zeros=False, color="b", log_transform=False,\
+def plot_abundance_diversity_correlation(a_df, g_df, ax=None, drop_zeros=False, color=None, log_transform=False,\
                                         do_proportions=False, title="Abundance Genetic Diversity Correlation",\
                                         quiet=True):
     if ax == None:
         _, ax = plt.subplots(figsize=(10, 10))
+    if isinstance(color, str):
+        pass
+    elif np.any(color):
+        pass
+    else:
+        color = np.random.rand(3,)
 
     ## if doing proportions scale all values to sum to 1
     if do_proportions:
@@ -195,7 +201,7 @@ def plot_abundance_diversity_correlation(a_df, g_df, ax=None, drop_zeros=False, 
     Y = X*linreg.slope + linreg.intercept
     ax.plot(X, Y, color=color, alpha=.5)
 
-    ax.scatter(tmp_df["abund"], tmp_df["genet"], label="{:.4f} - {}".format(linreg.rvalue**2, "Reunion Spiders"), color=color)
+    ax.scatter(tmp_df["abund"], tmp_df["genet"], label="{:.4f} - {}".format(linreg.rvalue**2, "MESS Simulations"), color=color)
 
     if not quiet: print(linreg)
     _ = plt.xlabel("Abundance", fontsize=15)
