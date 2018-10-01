@@ -7,6 +7,7 @@ import pandas as pd
 from collections import Counter
 from itertools import combinations
 from scipy.stats import entropy,linregress
+from scipy.spatial.distance import pdist, squareform
 
 
 #######################################################
@@ -135,21 +136,53 @@ def plot_hill_numbers(in_df, order=5, do_negative=False, title="Hill numbers", q
 
 
 def plot_RACs(in_df, title="Rank abundance", label=None, ax=None, color=None):
-    all_abunds = in_df[in_df.columns[0]].values
-    all_abunds = np.trim_zeros(np.sort(all_abunds)[::-1])
-    #all_abunds = np.sort(all_abunds)[::-1]
-    X = np.arange(0, len(all_abunds))
     if not ax:
         fig, ax = plt.subplots(figsize=(10, 10))
     if label == None:
        pass 
-    if color:
-        ax.semilogy(X, all_abunds, label=in_df.columns.values[0], linewidth=4, alpha=0.65, color=color)
-    else:
-        ax.semilogy(X, all_abunds, label=in_df.columns.values[0], linewidth=4, alpha=0.65)
+    for c in in_df.columns:
+        all_abunds = in_df[c].fillna(0).values
+        all_abunds = np.trim_zeros(np.sort(all_abunds)[::-1])
+        #all_abunds = np.sort(all_abunds)[::-1]
+        X = np.arange(0, len(all_abunds))
+        #print([(x,y) for x,y in zip(X, all_abunds)]) 
+        if color:
+            ax.semilogy(X, all_abunds, label=c, linewidth=4, alpha=0.65, color=color)
+        else:
+            ax.semilogy(X, all_abunds, label=c, linewidth=4, alpha=0.65)
     plt.title(title, fontsize=20)
     plt.legend(fontsize=15)
     return ax
+
+
+def plot_distances(abunds, labels, metric="braycurtis", title="distance"):
+    def mksq(abunds, metric):
+        dist = pdist(abunds, metric=metric)
+        return squareform(dist)    
+    if isinstance(metric, list):
+        sq1 = mksq(abunds, metric[0])
+        sq2 = mksq(abunds, metric[1])
+
+        idx = np.triu_indices(len(labels))
+        sq1[idx] = 0
+        sq2[idx] = 0
+        sq1 += sq2.T
+        ## Reformat as a string for the plot title
+        metric = "{}/{}".format(metric[0], metric[1])
+    else:
+        sq1 = mksq(abunds, metric)
+    
+    fix, ax = plt.subplots(figsize=(8,7))
+    heatmap = ax.pcolor(sq1, cmap="magma")
+    cbar = plt.colorbar(heatmap)
+    # Set ticks in center of cells
+    _ = ax.set_xticks(np.arange(len(labels)) + 0.5, minor=False)
+    _ = ax.set_yticks(np.arange(len(labels)) + 0.5, minor=False)
+
+    _ = ax.set_xticklabels(labels, rotation=45, ha="right", rotation_mode="anchor")
+    _ = ax.set_yticklabels(labels)
+    ax.set_title("{} - {} Distance(s)".format(title, metric))
+    return sq1
 
 
 ## Plot correlation between abundances and genetic diversities. Input should be dataframes
@@ -257,4 +290,13 @@ def load_data(pis_file, labels=None):
         labels = [pis_file.split("/")[-1].split(".")[0]]
     pis_df.columns = labels 
     return pis_df
+
+
+## Load multiple files at once into a concatenated dataframe. Convenience function
+## since this is something that happens regularly and the housekeeping is annoying.
+def load_dfs(df_files, labels=None):
+    dfs = {x.split("/")[-1]:load_data(x) for x in df_files}
+    df = pd.concat(dfs.values(), ignore_index=False, axis=1, sort=True)
+    return df
+
 
