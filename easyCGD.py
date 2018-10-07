@@ -88,31 +88,10 @@ def pi(fasta_file, quiet=True):
 #######################################################
 
 
-def plot_hill_numbers(combined_df, order=5, granularity=None, do_negative=False, title="Hill numbers for ABC combined", quiet=True):
+def plot_hill_numbers(in_df, order=5, do_negative=False, title="Hill numbers", quiet=True, axis_labels=True, ax=None, color=None):
     hill_results = {}
-    for region in regions:
-        all_abunds = np.concatenate([combined_df[region][ABC].values for ABC in ABCs])
-        hill_results[region] = hill_numbers(np.array(all_abunds), orders=order, granularity=granularity, do_negative=do_negative)
-    if not quiet: print(hill_results)
-    fig, ax = plt.subplots(figsize=(10, 10))
-    if do_negative:
-        X = np.linspace(-order, order, num=order*2+2)
-        ax.axvline(0, color="k", alpha=0.2, linewidth=3, linestyle="--")
-
-    else:
-        X = range(order+1)
-    for region, h in hill_results.items():
-        ax.semilogy(X, h, label=region, linewidth=4, alpha=0.65)
-
-    plt.title(title)
-    plt.legend()
-    return hill_results
-
-
-def plot_hill_numbers(in_df, order=5, do_negative=False, title="Hill numbers", quiet=True, ax=None, color=None):
-    hill_results = {}
-    all_abunds = in_df[in_df.columns[0]].values
-    hill_results[in_df.columns.values[0]] = hill_numbers(all_abunds, orders=order, granularity=None, do_negative=do_negative)
+    for name, vals in in_df.items():
+        hill_results[name] = hill_numbers(vals, orders=order, granularity=None, do_negative=do_negative)
     if not quiet: print(hill_results)
     if not ax:
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -129,28 +108,38 @@ def plot_hill_numbers(in_df, order=5, do_negative=False, title="Hill numbers", q
         else:
             ax.semilogy(X, h, label=region, linewidth=4, alpha=0.65)
 
+    if axis_labels:
+        plt.xlabel("Hill Number", fontsize=25)
+        plt.ylabel("# Effective Species", fontsize=25)
+
     plt.xticks(range(order))
-    plt.title(title, fontsize=20)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    plt.title(title, fontsize=30)
     plt.legend(fontsize=15)
     return ax
 
 
-def plot_RACs(in_df, title="Rank abundance", label=None, ax=None, color=None):
+def plot_RACs(in_df, trim_zeros=True, title="Rank abundance", label=None, axis_labels=True, ax=None, color=None):
     if not ax:
         fig, ax = plt.subplots(figsize=(10, 10))
     if label == None:
        pass 
     for c in in_df.columns:
         all_abunds = in_df[c].fillna(0).values
-        all_abunds = np.trim_zeros(np.sort(all_abunds)[::-1])
-        #all_abunds = np.sort(all_abunds)[::-1]
+        if trim_zeros:
+            all_abunds = np.trim_zeros(np.sort(all_abunds)[::-1])
+        else:
+            all_abunds = np.sort(all_abunds)[::-1]
         X = np.arange(0, len(all_abunds))
-        #print([(x,y) for x,y in zip(X, all_abunds)]) 
         if color:
             ax.semilogy(X, all_abunds, label=c, linewidth=4, alpha=0.65, color=color)
         else:
             ax.semilogy(X, all_abunds, label=c, linewidth=4, alpha=0.65)
-    plt.title(title, fontsize=20)
+    if axis_labels:
+        plt.xlabel("Rank", fontsize=25)
+        plt.ylabel("log(Abundance)", fontsize=25)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    plt.title(title, fontsize=30)
     plt.legend(fontsize=15)
     return ax
 
