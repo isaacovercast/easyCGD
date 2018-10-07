@@ -137,17 +137,23 @@ def plot_RACs(in_df, trim_zeros=True, title="Rank abundance", label=None, axis_l
             ax.semilogy(X, all_abunds, label=c, linewidth=4, alpha=0.65)
     if axis_labels:
         plt.xlabel("Rank", fontsize=25)
-        plt.ylabel("log(Abundance)", fontsize=25)
+        plt.ylabel("log10(Abundance)", fontsize=25)
     plt.tick_params(axis='both', which='major', labelsize=15)
     plt.title(title, fontsize=30)
     plt.legend(fontsize=15)
     return ax
 
 
-def plot_distances(abunds, labels, metric="braycurtis", title="distance"):
+def plot_distances(abunds, labels=None, metric="braycurtis", title="distance"):
+    ## Private function for munging data into a square format
     def mksq(abunds, metric):
         dist = pdist(abunds, metric=metric)
-        return squareform(dist)    
+        return squareform(dist)
+
+    if isinstance(abunds, pd.DataFrame):
+        labels = abunds.columns
+        abunds = abunds.values.T
+
     if isinstance(metric, list):
         sq1 = mksq(abunds, metric[0])
         sq2 = mksq(abunds, metric[1])
@@ -160,7 +166,9 @@ def plot_distances(abunds, labels, metric="braycurtis", title="distance"):
         metric = "{}/{}".format(metric[0], metric[1])
     else:
         sq1 = mksq(abunds, metric)
-    
+
+    if labels is None:
+        labels = ["n_{}".format(x) for x in range(sq1)]
     fix, ax = plt.subplots(figsize=(8,7))
     heatmap = ax.pcolor(sq1, cmap="magma")
     cbar = plt.colorbar(heatmap)
@@ -171,7 +179,7 @@ def plot_distances(abunds, labels, metric="braycurtis", title="distance"):
     _ = ax.set_xticklabels(labels, rotation=45, ha="right", rotation_mode="anchor")
     _ = ax.set_yticklabels(labels)
     ax.set_title("{} - {} Distance(s)".format(title, metric))
-    return sq1
+    return ax, sq1
 
 
 ## Plot correlation between abundances and genetic diversities. Input should be dataframes
@@ -196,9 +204,11 @@ def plot_abundance_diversity_correlation(a_df, g_df, ax=None, drop_zeros=False, 
         tmp_pis_df = g_df
         tmp_abund_df = a_df
 
+    xlab = "Abundance"
     if log_transform:
         tmp_pis_df = g_df
-        tmp_abund_df = np.log(a_df)
+        tmp_abund_df = np.log10(a_df)
+        xlab = "log10(Abundance)"
 
     ## Get global max x and y values for each ABC across all regions
     xmax = tmp_abund_df.max().values[0]
@@ -226,10 +236,11 @@ def plot_abundance_diversity_correlation(a_df, g_df, ax=None, drop_zeros=False, 
     ax.scatter(tmp_df["abund"], tmp_df["genet"], label="{:.4f} - {}".format(linreg.rvalue**2, "MESS Simulations"), color=color)
 
     if not quiet: print(linreg)
-    _ = plt.xlabel("Abundance", fontsize=15)
-    _ = plt.ylabel("Genetic Diversity", fontsize=15)
-    _ = plt.legend(loc="upper right")
-    _ = plt.suptitle(title, fontsize=20)
+    plt.xlabel(xlab, fontsize=25)
+    plt.ylabel("Genetic Diversity", fontsize=25)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    plt.legend(loc="upper right")
+    plt.suptitle(title, fontsize=30)
     return ax
 
 #######################################################
