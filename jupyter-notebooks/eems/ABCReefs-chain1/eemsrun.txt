@@ -1,0 +1,41 @@
+Input parameter values:
+               datapath = ABCReefs
+               mcmcpath = ABCReefs-chain1
+               prevpath = 
+               gridpath = 
+               distance = euclidean
+                diploid = 1
+                 nIndiv = 10
+                 nSites = 500
+                 nDemes = 100
+                   seed = 1538359817
+            numMCMCIter = 2000000
+            numBurnIter = 1000000
+            numThinIter = 9999
+              negBiSize = 10
+              negBiProb = 0.670000
+             qVoronoiPr = 0.250000
+             mrateShape = 0.000500
+             qrateShape = 0.002000
+             sigmaShape = 0.001000
+             qrateScale = 0.500000
+             mrateScale = 2.000000
+             sigmaScale = 1.000000
+       mSeedsProposalS2 = 4.250000
+       qSeedsProposalS2 = 3.550000
+       mEffctProposalS2 = 3.550000
+       qEffctProposalS2 = 0.250000
+      mrateMuProposalS2 = 4.000000
+
+Acceptance proportions:
+	(17316/124757) = 14% for proposal type "qTileRate",		 with proposal variance "qEffctProposalS2"
+	(52170/124785) = 42% for proposal type "qTileMove",		 with proposal variance "qSeedsProposalS2"
+	(106992/125000) = 86% for proposal type "qBirthDeath"
+	(168606/374168) = 45% for proposal type "mTileRate",		 with proposal variance "mEffctProposalS2"
+	(79019/250672) = 32% for proposal type "mMeanRate",		 with proposal variance "mrateMuProposalS2"
+	(167597/374487) = 45% for proposal type "mTileMove",		 with proposal variance "mSeedsProposalS2"
+	(281848/376203) = 75% for proposal type "mBirthDeath"
+	(170125/249928) = 68% for proposal type "degrees of freedom"
+
+Final log prior: 75.73
+Final log llike: 31.62
